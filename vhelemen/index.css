@@ -85,7 +85,7 @@ p {
   left: 0;
   top: 0;
 
-  background-image: url("sheet.svg");
+  background-image: url("./sheet.svg");
   background-repeat: no-repeat;
   background-position: calc(var(--sx) * (var(--tx) * -1)) calc(var(--sy) * (var(--ty) * -1));
   background-size: 400% 1100%;

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Image Bleed</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <button id="select">select file</button>
+        <button id="multiselect">select bulk</button>
+        <button id="toggle">toggle alpha pattern</button>
+        <input type="color" id="color" value="#ffffff" />
+      </header>
+
+      <canvas></canvas>
+
+      <span id="status" style="opacity: 0">loading...</span>
+
+      <input type="file" id="file" accept="image/*" style="display: none" />
+      <input type="file" id="multifile" accept="image/*" multiple style="display: none" />
+    </main>
+
+    <style>
+      *:not(textarea) {
+        font-family: Inter, sans-serif;
+        font-size: 1rem;
+      }
+
+      button {
+        cursor: pointer;
+
+        transition: color 0.125s, background-color 0.125s;
+      }
+
+      button:hover {
+        background-color: var(--accent);
+        color: #fff;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      header {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+
+        width: 100%;
+      }
+
+      header > * {
+        width: 100%;
+
+        --accent: #000;
+        background-color: #fff;
+        color: var(--accent);
+
+        border: 2px solid var(--accent);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 0.25rem;
+
+        padding: 0.5rem;
+
+        height: 2.75rem;
+      }
+
+      canvas {
+        max-width: 100%;
+
+        --primary: #f7f7fa;
+        --secondary: #ebebf3;
+
+        background: repeating-linear-gradient(-45deg, var(--primary) 0px, var(--primary) 4px, #0000 4px, #0000 8px),
+          repeating-linear-gradient(45deg, var(--primary) 0px, var(--primary) 4px, #0000 4px, #0000 8px), var(--secondary);
+
+        border: 1px solid #d7d7e4;
+      }
+
+      canvas[data-darken="true"] {
+        --primary: #282830;
+        --secondary: #1e1e24;
+
+        border: none;
+      }
+
+      #loading {
+        transition: opacity 0.25s;
+      }
+    </style>
+
+    <script defer>
+      /**
+       * @type{HTMLInputElement}
+       */
+      const file = document.querySelector("#file");
+      /**
+       * @type{HTMLInputElement}
+       */
+      const multifile = document.querySelector("#multifile");
+      /**
+       * @type{HTMLInputElement}
+       */
+      const color = document.querySelector("#color");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const select = document.querySelector("#select");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const multiselect = document.querySelector("#multiselect");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const download = document.querySelector("#download");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const toggle = document.querySelector("#toggle");
+      /**
+       * @type{HTMLSpanElement}
+       */
+      const status = document.querySelector("#status");
+
+      const canvas = document.querySelector("canvas");
+      const context = canvas.getContext("2d");
+
+      const process = (blob) =>
+        new Promise((resolve) => {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          const img = new Image();
+          const uri = URL.createObjectURL(blob);
+          img.src = uri;
+
+          img.onload = () => {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            context.fillStyle = `${color.value}01`;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            context.shadowColor = `${color.value}01`;
+            context.shadowBlur = 1;
+            context.shadowOffsetX = 0;
+            context.shadowOffsetY = 0;
+
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            resolve(true);
+          };
+        });
+
+      const exportCanvas = (name) => {
+        const a = document.createElement("a");
+
+        canvas.toBlob((blob) => {
+          if (!blob) return alert("Canvas has no data.");
+
+          const uri = URL.createObjectURL(blob);
+
+          a.href = uri;
+          a.download = name;
+
+          document.body.appendChild(a);
+          a.click();
+
+          a.remove();
+          URL.revokeObjectURL(uri);
+        }, "image/png");
+      };
+
+      select.addEventListener("click", () => file.click());
+      file.addEventListener("change", async () => {
+        const entry = file.files[0];
+        if (!entry) return;
+        if (!entry.type.startsWith("image/")) return alert("This is not an image.");
+
+        select.innerHTML = `<span>select file <span style="display: block; font-size: 60%; opacity: 0.5;">${entry.name}</span></span>`;
+
+        status.innerText = "loading...";
+        status.style.opacity = "1";
+
+        await process(entry);
+        exportCanvas(entry.name);
+
+        status.style.opacity = "0";
+      });
+
+      multiselect.addEventListener("click", () => multifile.click());
+      multifile.addEventListener("change", async () => {
+        if (!Array.from(multifile.files).some((f) => !f.name.startsWith("image/"))) return alert("One or more selected files are not an image.");
+
+        multiselect.innerHTML = `<span>select bulk <span style="display: block; font-size: 60%; opacity: 0.5;">${multifile.files.length} selected</span></span>`;
+
+        status.innerText = "loading...";
+        status.style.opacity = "1";
+
+        for (let i = 0; i < multifile.files.length; i += 1) {
+          const entry = multifile.files[i];
+          const parsed = entry.name.split(".")[0];
+
+          status.innerHTML = `processing ${parsed}...<br/><small>${i + 1} of ${multifile.files.length}</small>`;
+
+          await process(entry);
+          exportCanvas(entry.name);
+        }
+
+        status.style.opacity = "0";
+      });
+
+      let darken = false;
+      toggle.addEventListener("click", () => {
+        darken = !darken;
+        canvas.setAttribute("data-darken", String(darken));
+      });
+
+      color.addEventListener("change", () => {
+        if (!fileblob) return;
+        process();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Binary Chart Decoder</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1 class="title">binary chart thingy idk lol</h1>
+
+      <header class="control">
+        <textarea placeholder="0001 = 1" id="binary"></textarea>
+
+        <section>
+          <span id="info">
+            insert a formatted binary chart to begin
+            <a style="float: right" id="open-modal">view syntax</a>
+          </span>
+
+          <button id="exec">execute</button>
+        </section>
+      </header>
+
+      <section class="table">
+        <header>
+          <b>original binary</b>
+
+          <b>converted binary</b>
+
+          <b>original decimal</b>
+
+          <b>converted decimal</b>
+
+          <b>match</b>
+        </header>
+        <main id="output">
+          <span>no data</span>
+        </main>
+      </section>
+
+      <small style="opacity: 0.5">made by autione for maeve&apos;s wacky ass binary counting just because we were both bored as fuck yippee</small>
+    </div>
+
+    <div id="syntax-modal" hidden="true">
+      <main>
+        <p>
+          it&apos;s actually pretty straightforward. you just need to have your binary at the left and your decimal at the right, separated by an equals sign.
+        </p>
+
+        <span style="display: flex; flex-direction: column; gap: 0.5rem">
+          example:
+          <div class="preview" rows="4">
+            0001 = 1<br />
+            0010 = 2<br />
+            0011 = 3<br />
+            0100 = 4
+          </div>
+          <small>spaces are optional</small>
+        </span>
+
+        <p>
+          if the decimals you inserted match their binary counterparts, then you will see a checkmark icon at the respective match column. otherwise, a red
+          square will be shown instead.
+        </p>
+
+        <button id="close-modal">done</button>
+      </main>
+    </div>
+
+    <script>
+      const input = document.querySelector("#binary");
+      const output = document.querySelector("#output");
+
+      const exec = document.querySelector("#exec");
+
+      const status = (text) => (document.querySelector("#info").innerText = text);
+
+      const modal = document.querySelector("#syntax-modal");
+      document.querySelector("#open-modal").addEventListener("click", () => modal.setAttribute("hidden", "false"));
+      document.querySelector("#close-modal").addEventListener("click", () => modal.setAttribute("hidden", "true"));
+
+      const execute = () => {
+        exec.setAttribute("disabled", "true");
+        status("please wait");
+
+        output.innerHTML = "";
+
+        const start = Date.now();
+        const lines = input.value.split("\n");
+
+        let mismatches = 0;
+
+        for (let i = 0; i < lines.length; i += 1) {
+          const line = lines[i];
+          if (line.trim().length <= 0) continue;
+
+          status(`processing line ${i + 1}/${lines.length}`);
+
+          const [binary, entry] = line.replaceAll(" ", "").split("=");
+          const numPre = parseInt(entry);
+          const numPos = parseInt(binary, 2);
+
+          const tblLine = document.createElement("span");
+          tblLine.classList.add("line");
+          output.append(tblLine);
+
+          const colOBin = document.createElement("span");
+          colOBin.innerText = binary;
+          colOBin.style.fontFamily = "monospace";
+          tblLine.appendChild(colOBin);
+
+          const colCBin = document.createElement("span");
+          colCBin.innerText = numPre.toString(2).padStart(binary.length, "0");
+          colCBin.style.fontFamily = "monospace";
+          tblLine.appendChild(colCBin);
+
+          const colODec = document.createElement("span");
+          colODec.innerText = numPre;
+          tblLine.appendChild(colODec);
+
+          const colCDec = document.createElement("span");
+          colCDec.innerText = numPos;
+          tblLine.appendChild(colCDec);
+
+          const colMtc = document.createElement("span");
+          colMtc.innerText = numPos === numPre ? "✅" : "🟥";
+          tblLine.appendChild(colMtc);
+
+          if (numPos !== numPre) mismatches += 1;
+        }
+
+        const end = Date.now();
+        status(
+          `done • ${lines.length - mismatches}/${lines.length} correct entr${lines.length == 1 ? "y" : "ies"} • ${mismatches} mismatch${
+            mismatches == 1 ? "" : "es"
+          } • took ${end - start}ms`
+        );
+
+        exec.removeAttribute("disabled");
+      };
+
+      exec.addEventListener("click", execute);
+    </script>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      body,
+      html {
+        background-color: #181825;
+        color: #cdd6f4;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        width: 100%;
+
+        font-family: "Inter", sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: underline;
+
+        cursor: pointer;
+
+        transition: filter 0.25s;
+      }
+
+      a:hover {
+        filter: brightness(1.5);
+      }
+
+      p {
+        padding: 0;
+        margin: 0;
+
+        width: 100%;
+      }
+
+      #app {
+        width: 100vw;
+        max-width: 1024px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        padding: 1rem;
+      }
+
+      #close-modal {
+        background-color: #cdd6f433;
+        color: #cdd6f4;
+
+        border: none;
+        border-radius: 0.5rem;
+
+        cursor: pointer;
+
+        font: inherit;
+        font-weight: 500;
+
+        padding: 0.5rem 0.75rem;
+
+        transition: background-color 0.25s, color 0.25s;
+      }
+
+      #close-modal:hover {
+        background-color: #cdd6f455;
+      }
+
+      #syntax-modal {
+        background-color: #0008;
+        backdrop-filter: blur(1rem);
+
+        position: fixed;
+        left: 0;
+        top: 0;
+
+        width: 100vw;
+        height: 100vh;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        overflow: hidden;
+
+        padding-top: 0rem;
+
+        opacity: 1;
+        pointer-events: all;
+
+        transition: opacity 0.25s, padding-top 0.25s;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      #syntax-modal[hidden="true"] {
+        opacity: 0;
+        padding-top: 1rem;
+        pointer-events: none;
+
+        transition-timing-function: cubic-bezier(0.83, 0, 0.17, 1);
+      }
+
+      #syntax-modal > main {
+        background-color: #181825;
+        padding: 2rem;
+
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px #0002;
+
+        width: 100vw;
+        max-width: 640px;
+      }
+
+      .title {
+        font-size: 2rem;
+        font-weight: bold;
+
+        padding: 0;
+        margin: 0;
+      }
+
+      .control {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .control > section {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+      }
+
+      #binary {
+        background-color: #1e1e2e;
+        color: #fff;
+
+        font-size: 1rem;
+
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+
+        min-height: 180px;
+
+        border: none;
+        resize: none;
+
+        transition: background-color 0.25s;
+      }
+
+      .preview {
+        width: calc(100% - 1.5rem);
+
+        background-color: #1e1e2e;
+        color: #fff;
+
+        font-family: monospace;
+        font-size: 1rem;
+
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+      }
+
+      #binary:focus,
+      #binary:hover {
+        background-color: #313244;
+      }
+
+      .table {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .table > header {
+        display: flex;
+        flex-direction: row;
+
+        width: 100%;
+        padding: 0.5rem;
+
+        background-color: #18182566;
+        backdrop-filter: blur(1rem);
+
+        border-bottom: 1px solid #585b70;
+
+        position: sticky;
+        top: 0;
+      }
+
+      .table > header > b {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #output {
+        width: 100%;
+
+        font-size: 1rem;
+        font-family: "Inter", sans-serif;
+
+        display: flex;
+        flex-direction: column;
+      }
+
+      #output > .line {
+        width: 100%;
+
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      #output > .line > span {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        padding: 0.5rem;
+      }
+
+      #exec {
+        background-color: #a6e3a133;
+        color: #a6e3a1;
+
+        border: none;
+        border-radius: 0.5rem;
+
+        cursor: pointer;
+
+        font: inherit;
+        font-weight: 500;
+
+        padding: 0.5rem 0.75rem;
+
+        transition: background-color 0.25s, color 0.25s;
+      }
+
+      #exec:disabled {
+        background-color: #a6adc833;
+        color: #a6adc8;
+      }
+
+      #exec:hover {
+        background-color: #a6e3a155;
+      }
+
+      #info {
+        width: 100%;
+
+        font-size: 1rem;
+        font-family: "Inter", sans-serif;
+
+        display: block;
+
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+
+        background-color: #11111b;
+        color: #a6adc8;
+      }
+    </style>
+  </body>
+</html>

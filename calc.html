@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator</title>
+  </head>
+  <body>
+    <div class="calc">
+      <input id="input" readonly type="text" />
+
+      <section class="keypad">
+        <header>
+          <button class="action">+</button>
+          <button class="action">-</button>
+          <button class="action">×</button>
+          <button class="action">÷</button>
+          <button class="action clr">C</button>
+        </header>
+
+        <main>
+          <div class="digits">
+            <main>
+              <button class="digit">7</button>
+              <button class="digit">8</button>
+              <button class="digit">9</button>
+              <button class="digit">4</button>
+              <button class="digit">5</button>
+              <button class="digit">6</button>
+              <button class="digit">1</button>
+              <button class="digit">2</button>
+              <button class="digit">3</button>
+            </main>
+
+            <footer>
+              <button class="digit">0</button>
+              <button class="digit">.</button>
+            </footer>
+          </div>
+
+          <aside>
+            <button class="action">()</button>
+            <button class="action eq">=</button>
+          </aside>
+        </main>
+      </section>
+    </div>
+  </body>
+
+  <script defer>
+    const input = document.querySelector("#input");
+    let parenthesis = false;
+
+    const overrides = {
+      "()": () => {
+        parenthesis = !parenthesis;
+        return parenthesis ? "(" : ")";
+      },
+      "=": () => "",
+    };
+
+    const replacers = {
+      "×": "*",
+      "÷": "/",
+    };
+
+    const clear = () => (input.value = "");
+
+    const process = (digit) => {
+      if (input.value.startsWith("Error")) clear();
+      input.value += overrides[digit] ? overrides[digit]() : digit;
+    };
+
+    const evaluate = () => {
+      try {
+        let expr = String(input.value);
+        for (const source of Object.keys(replacers)) expr = expr.replaceAll(source, replacers[source]);
+
+        input.value = eval(expr);
+      } catch (err) {
+        console.error("Failed to eval expression:", err);
+        input.value = "Error";
+      }
+    };
+
+    document.querySelectorAll(".digit").forEach((d) => d.addEventListener("click", () => process(d.innerText)));
+    document.querySelectorAll(".action").forEach((d) => d.addEventListener("click", () => process(d.innerText)));
+
+    document.querySelector(".clr").addEventListener("click", clear);
+    document.querySelector(".eq").addEventListener("click", evaluate);
+
+    clear();
+  </script>
+
+  <style>
+    body,
+    html {
+      padding: 0;
+      margin: 0;
+
+      background-color: #f7f7fa;
+
+      font-family: "Inter", sans-serif;
+
+      width: 100vw;
+      height: 100vh;
+
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .calc {
+      width: 100%;
+      max-width: 320px;
+
+      background-color: #e5e5ee;
+      border-radius: 1rem;
+      border: 1px solid #0041;
+
+      padding: 2rem;
+
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+
+      box-shadow: 0 5px 10px #0002;
+    }
+
+    .calc > input {
+      font: inherit;
+      font-size: 1.5rem;
+      text-align: right;
+
+      width: calc(100% - 1.5rem);
+
+      border: 1px solid #0042;
+      border-radius: 0.5rem;
+
+      padding: 0.75rem;
+    }
+
+    .keypad {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .keypad button {
+      font: inherit;
+      font-size: 1.5rem;
+
+      background-color: #0001;
+      border-radius: 0.5rem;
+      border: none;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      height: 3rem;
+
+      padding: 1rem;
+
+      cursor: pointer;
+    }
+
+    .keypad > header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 3rem;
+      gap: 1rem;
+    }
+
+    .keypad > header > button {
+      width: 100%;
+    }
+
+    .keypad > main {
+      display: grid;
+      grid-template-columns: 1fr max-content;
+      gap: 1rem;
+
+      width: 100%;
+    }
+
+    .keypad > main > aside {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 1rem;
+
+      height: 100%;
+    }
+
+    .keypad > main > aside > button {
+      height: 100%;
+    }
+
+    .digits {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .digits > main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+
+      width: 100%;
+    }
+
+    .digits > footer {
+      display: grid;
+      grid-template-columns: auto 30%;
+      gap: 1rem;
+
+      width: 100%;
+    }
+
+    .eq {
+      background-color: #f58052 !important;
+      color: #fff;
+    }
+
+    .clr {
+      background-color: #ff4f4f !important;
+      color: #fff;
+    }
+  </style>
+</html>

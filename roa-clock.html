@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <button id="toggle" style="--accent: #5f7fdf">start</button>
+        <button id="step" style="--accent: #f75f7f">step</button>
+        <button id="charge" style="--accent: #f78f6f">charge</button>
+        <span>frame <b id="frameNum">?</b></span>
+      </header>
+
+      <div style="display: flex; flex-direction: row">
+        <textarea id="lines" cols="4" rows="20" readonly></textarea>
+        <textarea id="output" cols="75" readonly></textarea>
+        <textarea id="values" cols="20" readonly></textarea>
+      </div>
+    </main>
+
+    <style>
+      *:not(textarea) {
+        font-family: Inter, sans-serif;
+        font-size: 1rem;
+      }
+
+      button {
+        cursor: pointer;
+
+        transition: color 0.125s, background-color 0.125s;
+      }
+
+      button:hover {
+        background-color: var(--accent);
+        color: #fff;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      header {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+
+        width: 100%;
+      }
+
+      header > * {
+        width: 100%;
+
+        --accent: #000;
+        background-color: #fff;
+        color: var(--accent);
+
+        border: 2px solid var(--accent);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 0.25rem;
+
+        padding: 0.5rem;
+      }
+
+      main > div > textarea {
+        border: 2px solid #000;
+        outline: none;
+        resize: none;
+      }
+
+      #output {
+        border-left: none;
+        border-right: none;
+      }
+    </style>
+
+    <script defer>
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const toggle = document.querySelector("#toggle");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const step = document.querySelector("#step");
+      /**
+       * @type{HTMLButtonElement}
+       */
+      const charge = document.querySelector("#charge");
+
+      /**
+       * @type{HTMLSpanElement}
+       */
+      const frameNum = document.querySelector("#frameNum");
+
+      /**
+       * @type{HTMLTextAreaElement}
+       */
+      const lines = document.querySelector("#lines");
+      lines.value = "";
+
+      /**
+       * @type{HTMLTextAreaElement}
+       */
+      const output = document.querySelector("#output");
+      output.value = "";
+
+      /**
+       * @type{HTMLTextAreaElement}
+       */
+      const values = document.querySelector("#values");
+      values.value = "";
+
+      const fps = 60;
+      let frame = 0;
+      let clock = null;
+
+      let charging = false;
+
+      lines.addEventListener("scroll", () => {
+        output.scrollTop = lines.scrollTop;
+      });
+
+      output.addEventListener("scroll", () => {
+        lines.scrollTop = output.scrollTop;
+      });
+
+      const log = (text) => {
+        lines.value += `${frame}\n`;
+        lines.scrollBy(0, lines.scrollHeight);
+
+        output.value += `${text}\n`;
+        output.scrollBy(0, output.scrollHeight);
+      };
+
+      const raw_tick = () => {
+        frame += 1;
+        frameNum.innerText = String(frame);
+        log("[*] Tick");
+
+        tick();
+      };
+
+      toggle.addEventListener("click", () => {
+        if (clock) {
+          clearInterval(clock);
+          clock = null;
+
+          toggle.innerText = "start";
+          return;
+        }
+
+        clock = setInterval(raw_tick, 1000 / fps);
+        toggle.innerText = "stop";
+      });
+
+      step.addEventListener("click", raw_tick);
+
+      charge.addEventListener("click", () => {
+        log("[>] Started charging");
+
+        charging = true;
+        charge.disabled = true;
+      });
+
+      ///
+
+      var dash_speed = 7.5;
+      var air_max_speed = 4;
+      var air_accel = 0.3;
+      var walk_speed = 3.2;
+
+      var overload = false,
+        overloadTimer = 0,
+        overloadUptime = 0;
+
+      const init_shader = () => console.log("init_shader called");
+
+      const update_stats = () => {
+        dash_speed = overload ? 8.8 : 7.5;
+        air_max_speed = overload ? 5.5 : 4;
+        air_accel = overload ? 0.6 : 0.3;
+        walk_speed = overload ? 3.8 : 3.2;
+      };
+
+      const updateStatView = () => {
+        values.value = [
+          `overload = ${overload}`,
+          `overloadTimer = ${overloadTimer}`,
+          `overloadUptime = ${overloadUptime}`,
+          `charging = ${charging}`,
+          "",
+          `dash_speed = ${dash_speed}`,
+          `air_max_speed = ${air_max_speed}`,
+          `air_accel = ${air_accel}`,
+          `walk_speed = ${walk_speed}`,
+        ].join("\n");
+      };
+
+      function tick() {
+        if (charging) {
+          overloadTimer += 0.3;
+          charge.disabled = true;
+        }
+
+        if (overload) {
+          if (overloadUptime > 0) {
+            overloadUptime -= 4;
+          } else {
+            overload = false;
+            overloadUptime = 900;
+
+            log("[<] Overload finished");
+            update_stats();
+          }
+        } else if (!overload && overloadTimer >= 100) {
+          init_shader();
+          overload = true;
+          overloadTimer = 0;
+          overloadUptime = 900;
+
+          if (charging) {
+            charging = false;
+            charge.disabled = false;
+            log("[<] Stopped charging");
+          }
+
+          log("[>] Overload started");
+          update_stats();
+        }
+
+        updateStatView();
+      }
+
+      updateStatView();
+    </script>
+  </body>
+</html>

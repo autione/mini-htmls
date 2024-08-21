@@ -24,7 +24,7 @@ const executeConversion = () => {
 
     const isApos = next === "'";
     const isPortAndException = next === "-" && char in exceptions;
-    const canStrip = (isApos || isPortAndException) && syllable.length > 1;
+    const canStrip = (isApos || isPortAndException) && syllable.length > 1 && Number.isNaN(Number(syllable));
     if (canStrip) syllable = syllable.substring(0, syllable.length - 1);
 
     final += syllable;
@@ -115,6 +115,9 @@ display.addEventListener("click", (e) => {
 display.addEventListener("keydown", (e) => {
   const rules = [
     [/ss/g, "S"],
+    [/10/g, "X"],
+    [/50/g, "V"],
+    [/X0/g, "C"],
     [/\-\-/g, "-"],
   ];
 
@@ -153,16 +156,12 @@ display.addEventListener("keydown", (e) => {
     }
 
     case "Home": {
-      e.preventDefault();
       state.cursorPos = 0;
-
       break;
     }
 
     case "End": {
-      e.preventDefault();
       state.cursorPos = state.displayString.length;
-
       break;
     }
 
@@ -176,6 +175,10 @@ display.addEventListener("keydown", (e) => {
       e.preventDefault();
 
       writeAtCursor(e.key);
+
+      for (const [expr, _] of rules) {
+        if (state.displayString.match(expr)) moveCursor(-1);
+      }
     }
   }
 

@@ -1,8 +1,8 @@
-import { glyphMap, exceptions, classes } from "./data.js";
+import { glyphMap, classes } from "./data.js";
 
 /** @type {HTMLDivElement} */
 const keyboard = document.querySelector("#keyboard");
-const lines = ["'qertyuiop-", "asdfghjkl", "zxcvbnm"];
+const lines = ["1234567890", "'qertyuiop-", "asdfghjkl", "zxcvbnm"];
 
 for (const line of lines) {
   const section = document.createElement("section");

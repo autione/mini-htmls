@@ -58,7 +58,6 @@ p {
   width: var(--sx);
   height: var(--sy);
   position: relative;
-  display: block;
 }
 
 .wrapper.apos {
@@ -70,13 +69,6 @@ p {
   translate: calc(var(--sx) * -0.5) -8px;
 }
 
-.wrapper.break {
-  width: 0;
-  height: 24px;
-  flex-basis: 100%;
-  margin-bottom: -0.5rem;
-}
-
 .char {
   --tx: 0;
   --ty: 0;
@@ -85,10 +77,10 @@ p {
   left: 0;
   top: 0;
 
-  background-image: url("./sheet.svg");
+  background-image: url("sheet.svg");
   background-repeat: no-repeat;
   background-position: calc(var(--sx) * (var(--tx) * -1)) calc(var(--sy) * (var(--ty) * -1));
-  background-size: 400% 1100%;
+  background-size: 500% 1100%;
 
   aspect-ratio: 1;
 
